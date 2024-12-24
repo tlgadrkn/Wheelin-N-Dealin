@@ -7,8 +7,16 @@ namespace SearchService.Services
 {
     public class SearchService : ISearchService
     {
+
+        public SearchService()
+        {
+
+        }
+
         public async Task<SearchResponseDto<Item>> SearchAsync(SearchParameters searchParameters)
         {
+            ValidateSearchParameters(searchParameters);
+
             var query = DB.PagedSearch<Item>().Sort(item => item.Descending(i => i.Make));
 
             if (!string.IsNullOrEmpty(searchParameters.SearchTerm))
@@ -57,5 +65,18 @@ namespace SearchService.Services
                 TotalCount = result.TotalCount
             };
         }
+
+        private void ValidateSearchParameters(SearchParameters parameters)
+        {
+            if (parameters == null)
+                throw new ArgumentNullException(nameof(parameters));
+            
+            if (parameters.PageNumber < 1)
+                throw new ArgumentException("Page number must be greater than 0");
+            
+            if (parameters.PageSize < 1)
+                throw new ArgumentException("Page size must be greater than 0");
+        }
+
     }
 }
