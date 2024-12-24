@@ -6,13 +6,14 @@ using SearchService.Entities;
 
 namespace SearchService.Consumers;
 
-public class AuctionUpdatedConsumer(IMapper mapper) : IConsumer<AuctionUpdated>
+public class AuctionUpdatedConsumer(IMapper _mapper) : IConsumer<AuctionUpdated>
 {
+
     public async Task Consume(ConsumeContext<AuctionUpdated> context)
     {
         Console.WriteLine("--> Consuming auction updated: " + context.Message.Id);
 
-        var item = mapper.Map<Item>(context.Message);
+        var item = _mapper.Map<Item>(context.Message);
 
         var result = await DB.Update<Item>()
             .Match(a => a.ID == context.Message.Id)

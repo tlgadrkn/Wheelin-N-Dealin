@@ -41,7 +41,10 @@ builder.Services.AddMassTransit(x =>
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.ReceiveEndpoint("search-auction-created", e =>
-        {
+        {   
+
+            // In case there is an exception while saving to db, we need to retry the message 5 times with a delay of 5 seconds between each retry so we would not lose any messages, because there might be event bus does it's job and send the message to the service but after that there is an exception while saving to db.
+            // This is a good practice to avoid losing any messages.
             e.UseMessageRetry(r => r.Interval(5,5));
 
             e.ConfigureConsumer<AuctionCreatedConsumer>(context);

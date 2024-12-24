@@ -98,15 +98,16 @@ namespace AuctionService.Controllers
         auction.Item.Color = updateAuctionDto.Color ?? auction.Item.Color;
         auction.Item.Mileage = updateAuctionDto.Mileage ?? auction.Item.Mileage;
         auction.UpdatedAt = DateTime.UtcNow;
-        
+
+        var updatedAuction = _mapper.Map<AuctionUpdated>(auction);
+        // we publish to the queue before saving to the db, so if the save fails, the message would be saved to the outbox table and the service bus will retry to send the message again.
+        await _publishEndpoint.Publish(updatedAuction);
         var success = await _context.SaveChangesAsync() > 0;
         _logger.LogInformation("Updated auction with id: {id}", id);
-        if (success) {
-            await _publishEndpoint.Publish(_mapper.Map<AuctionUpdated>(auction));
-            return Ok(_mapper.Map<AuctionUpdated>(auction));
-        } else {
-            return BadRequest("Could not update auction");
-        }
+
+        if (!success) return BadRequest("Could not update auction"); 
+        return Ok(updatedAuction);
+        
     }
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAuction(Guid id) {
@@ -116,13 +117,11 @@ namespace AuctionService.Controllers
         }
 
         _context.Auctions.Remove(_mapper.Map<Auction>(auction));
+        var deletedAuction = _mapper.Map<AuctionDeleted>(auction);
+        await _publishEndpoint.Publish(deletedAuction);
         var success = await _context.SaveChangesAsync() > 0;
-        if (success) {
-            await _publishEndpoint.Publish(_mapper.Map<AuctionDeleted>(auction));
-            return Ok();
-        } else {
-            return BadRequest("Could not delete auction");
-        }
+        if (!success) return BadRequest("Could not delete auction");
+        return Ok();
     }
     };
 }
