@@ -14,39 +14,19 @@ public static class Config
     public static IEnumerable<ApiScope> ApiScopes =>
         new ApiScope[]
         {
-            new ApiScope("scope1"),
-            new ApiScope("scope2"),
+            new ApiScope("auctionApp", "Auction app full access"),
         };
 
     public static IEnumerable<Client> Clients =>
         new Client[]
         {
-            // m2m client credentials flow client
-            new Client
+            new Client 
             {
-                ClientId = "m2m.client",
-                ClientName = "Client Credentials Client",
-
-                AllowedGrantTypes = GrantTypes.ClientCredentials,
-                ClientSecrets = { new Secret("511536EF-F270-4058-80CA-1C89C192F69A".Sha256()) },
-
-                AllowedScopes = { "scope1" }
-            },
-
-            // interactive client using code flow + pkce
-            new Client
-            {
-                ClientId = "interactive",
-                ClientSecrets = { new Secret("49C1A7E1-0C79-4A89-A3D6-A37998FB86B0".Sha256()) },
-
-                AllowedGrantTypes = GrantTypes.Code,
-
-                RedirectUris = { "https://localhost:44300/signin-oidc" },
-                FrontChannelLogoutUri = "https://localhost:44300/signout-oidc",
-                PostLogoutRedirectUris = { "https://localhost:44300/signout-callback-oidc" },
-
-                AllowOfflineAccess = true,
-                AllowedScopes = { "openid", "profile", "scope2" }
-            },
+            ClientId = "postmanClient",
+            ClientName = "Postman Client",
+            AllowedGrantTypes = GrantTypes.ResourceOwnerPassword, // Client credentials flow machin to machine communication, not safe just for testing/development, 
+            ClientSecrets = { new Secret("postmanSecret".Sha256()) }, // Secret for the client, hashed secret using sha256. should be stored securely in production
+            AllowedScopes = { "auctionApp", "openid", "profile" } // Scopes that the client has access to, in this case the auctionApp scope which is defined above and gives full access to the API, in production you should limit the scope to the minimum required for the client
+            }
         };
 }

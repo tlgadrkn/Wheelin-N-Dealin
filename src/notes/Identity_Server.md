@@ -94,3 +94,149 @@ services so that users can use something they already have rather than signing u
 encounter a new application and use its functionality.
 
 So that's a very, very brief overview of OpenID Connect and OAuth 2.0.
+
+## Configuration
+
+### Api Scopes
+
+- `Api Scopes` are a way to define the permissions that a client has to access an API. This is a way to control what a client can do with the API. For example, you might have a scope that allows a client to read data from the API, or a scope that allows a client to write data to the API. This is a way to control what a client can do with the API and to ensure that the client only has access to the data that it needs.
+
+API Scopes define the permissions that clients can request when accessing APIs. They represent the level of access that a client application can have. In this configuration, there is one API scope defined:
+
+in my app we have this scope:
+
+`auctionApp`: This scope represents full access to the Auction application. When a client requests this scope, it is asking for permission to perform any action within the Auction application.
+
+### Clients
+
+Clients are applications that request tokens from the IdentityServer. Each client has a unique configuration that specifies how it can authenticate and what resources it can access. In this configuration, there are two clients defined:
+
+a. Client Credentials Client
+This client uses the Client Credentials flow, which is typically used for machine-to-machine communication where no user is involved. Here are the details:
+
+- ClientId: "m2m.client"
+
+This is the unique identifier for the client.
+ClientName: "Client Credentials Client"
+A descriptive name for the client.
+AllowedGrantTypes: GrantTypes.ClientCredentials
+Specifies that this client uses the Client Credentials flow.
+ClientSecrets: { new Secret("511536EF-F270-4058-80CA-1C89C192F69A".Sha256()) }
+The secret used to authenticate the client. It is hashed using SHA-256 for security.
+AllowedScopes: { "scope1" }
+Specifies the scopes that this client is allowed to request. In this case, it can request the "scope1" scope.
+b. Interactive Client
+This client uses the Authorization Code flow with PKCE (Proof Key for Code Exchange), which is typically used for user authentication. Here are the details:
+
+- ClientId: "interactive"
+
+This is the unique identifier for the client.
+ClientSecrets: { new Secret("49C1A7E1-0C79-4A89-A3D6-A37998FB86B0".Sha256()) }
+The secret used to authenticate the client. It is hashed using SHA-256 for security.
+AllowedGrantTypes: GrantTypes.Code
+Specifies that this client uses the Authorization Code flow with PKCE.
+RedirectUris: { "https://localhost:44300/signin-oidc" }
+The URI to which the authorization server will redirect the user after they have authenticated.
+FrontChannelLogoutUri: "https://localhost:44300/signout-oidc"
+The URI to which the authorization server will redirect the user after they have logged out.
+PostLogoutRedirectUris: { "https://localhost:44300/signout-callback-oidc" }
+The URI to which the authorization server will redirect the user after the logout process is complete.
+AllowOfflineAccess: true
+Allows the client to request refresh tokens, which can be used to obtain new access tokens without requiring the user to log in again.
+
+## AUTHENTICATION FLOW
+
+1. Client Authentication
+   Step 1: Client Requests Token
+
+Client: Postman
+Action: Postman sends a request to the IdentityServer's token endpoint (/connect/token) to obtain an access token.
+Details:
+URL: https://localhost:5001/connect/token
+HTTP Method: POST
+Headers: Content-Type: application/x-www-form-urlencoded
+Body:
+grant_type: password
+client_id: postmanClient
+client_secret: postmanSecret
+username: <user's username>
+password: <user's password>
+scope: auctionApp openid profile
+Step 2: IdentityServer Validates Client Credentials
+
+IdentityServer: Receives the token request and validates the client's credentials (client_id and client_secret).
+Details:
+ClientId: postmanClient
+ClientSecret: postmanSecret (hashed using SHA-256)
+Step 3: IdentityServer Validates User Credentials
+
+IdentityServer: Validates the user's credentials (username and password).
+Details:
+Username: <user's username>
+Password: <user's password> 2. Token Issuance
+Step 4: IdentityServer Issues Tokens
+
+IdentityServer: If both the client and user credentials are valid, the IdentityServer issues an access token and an ID token (if requested).
+Details:
+Access Token: Contains information about the client, user, and the scopes granted.
+ID Token: Contains identity information about the user (if openid scope is requested).
+Step 5: IdentityServer Responds with Tokens
+
+IdentityServer: Sends a response back to the client (Postman) with the issued tokens.
+Details:
+Response Body:
+access_token: <JWT access token>
+id_token: <JWT ID token> (if openid scope is requested)
+token_type: Bearer
+expires_in: <expiration time in seconds>
+
+3. Accessing the API
+   Step 6: Client Uses Access Token
+
+Client: Postman
+Action: Postman uses the access token to authenticate requests to the Auction application API.
+Details:
+URL: https://localhost:5001/api/auctions
+HTTP Method: GET (or any other method)
+Headers:
+Authorization: Bearer <access_token>
+Step 7: API Validates Access Token
+
+API: The Auction application API receives the request and validates the access token.
+Details:
+Access Token: The API verifies the token's signature, expiration, and scopes.
+Step 8: API Processes Request
+
+API: If the access token is valid, the API processes the request and returns the appropriate response.
+Details:
+Response: The API returns the requested data or performs the requested action.
+Detailed Flow Diagram
+Client Requests Token:
+
+Postman sends a POST request to /connect/token with client credentials, user credentials, and requested scopes.
+IdentityServer Validates Credentials:
+
+IdentityServer validates the client_id and client_secret.
+IdentityServer validates the username and password.
+IdentityServer Issues Tokens:
+
+If credentials are valid, IdentityServer issues an access token and an ID token (if requested).
+Client Receives Tokens:
+
+Postman receives the tokens in the response.
+Client Uses Access Token:
+
+Postman sends a request to the Auction application API with the access token in the Authorization header.
+API Validates Access Token:
+
+The API validates the access token's signature, expiration, and scopes.
+API Processes Request:
+
+If the token is valid, the API processes the request and returns the response.
+Security Considerations
+Client Secrets: The client secret is hashed using SHA-256 for security. In a production environment, secrets should be stored securely and not hard-coded in the configuration.
+Grant Types: The Resource Owner Password flow is used here for simplicity in development. In production, more secure flows like Authorization Code with PKCE should be used for public clients.
+Scopes: The allowed scopes should be limited to the minimum required for the client. In this case, the client has full access to the Auction application and user identity information.
+By following this flow, we ensure that only authenticated clients can access the API and that they have the appropriate permissions based on the requested scopes. This setup provides a robust foundation for secure communication between clients and APIs in a microservices architecture.
+
+https://docs.duendesoftware.com/identityserver/v7/tokens/authentication/jwt/
