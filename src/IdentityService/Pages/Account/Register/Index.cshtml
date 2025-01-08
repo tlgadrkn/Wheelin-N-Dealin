@@ -1,0 +1,80 @@
+﻿@page
+@model IdentityService.Pages.Account.Register.Index
+<div class="container">
+
+<div class="d-flex align-items-center justify-content-center vh-100">
+    <div class="card shadow-lg p-4" style="max-width: 500px; width: 100%;">
+        <div class="card-body">
+            <div class="text-center mb-4">
+                <h1 class="h3">Join Wheelin'N'Dealin</h1>
+                <p>Enter your details to create an account</p>
+            </div>
+
+            @if (Model.RegisterSuccess)
+            {
+                <div class="alert alert-success text-center">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <h3>Welcome aboard!</h3>
+                    <p>Your account has been created successfully.</p>
+                    <a class="btn btn-primary" asp-page="../Login/Index" 
+                       asp-route-returnUrl="@Model.Input.ReturnUrl">Continue to Login</a>
+                </div>
+            }
+            else
+            {
+                <form asp-page="/Account/Register/Index" class="modern-form">
+                    <input type="hidden" asp-for="Input.ReturnUrl" />
+                    
+                    <div class="form-group mb-3">
+                        <label asp-for="Input.Username" class="form-label">Username</label>
+                        <input class="form-control" placeholder="Choose a username" asp-for="Input.Username" autofocus>
+                        <span asp-validation-for="Input.Username" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Input.Email" class="form-label">Email address</label>
+                        <input class="form-control" placeholder="name@example.com" asp-for="Input.Email">
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Input.Fullname" class="form-label">Full name</label>
+                        <input class="form-control" placeholder="Your full name" asp-for="Input.Fullname">
+                        <span asp-validation-for="Input.Fullname" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Input.Password" class="form-label">Password</label>
+                        <input type="password" class="form-control" placeholder="Create a strong password" asp-for="Input.Password">
+                        <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label asp-for="Input.ConfirmPassword" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" placeholder="Repeat your password" asp-for="Input.ConfirmPassword">
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-block" name="Input.ButtonText" value="register">
+                            Create Account
+                        </button>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        Already have an account? 
+                        <a asp-page="../Login/Index" asp-route-returnUrl="@Model.Input.ReturnUrl" class="text-decoration-none">
+                            Sign in
+                        </a>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+</div>
+
+@section scripts {
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+}
