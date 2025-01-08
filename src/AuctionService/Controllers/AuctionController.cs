@@ -12,10 +12,12 @@ using Microsoft.EntityFrameworkCore;
 using MassTransit;
 using Contracts;
 using AutoMapper.QueryableExtensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AuctionService.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/auctions")]
     public class AuctionController : ControllerBase
     {
@@ -60,10 +62,7 @@ namespace AuctionService.Controllers
     [HttpPost]
     public async Task<ActionResult<AuctionDto>> CreateAuction([FromBody] CreateAuctionDto createAuctionDto) {
         var auction = _mapper.Map<Auction>(createAuctionDto);
-        // @TODO: Add current user as seller
-        auction.Seller = "test";
-        
-
+        auction.Seller = User.Identity.Name;        
         // ef tracking this, in memory. not saved to db.
         _context.Auctions.Add(auction);
 
@@ -91,6 +90,9 @@ namespace AuctionService.Controllers
         if (auction == null) {
             return NotFound("No auction found with id: {id}");
         }
+        if(auction.Seller != User.Identity.Name) {
+            return Unauthorized("You are not authorized to update this auction");
+        }
 
         auction.Item.Make = updateAuctionDto.Make ?? auction.Item.Make;
         auction.Item.Model = updateAuctionDto.Model ?? auction.Item.Model;
@@ -115,7 +117,9 @@ namespace AuctionService.Controllers
         if (auction == null) {
             return NotFound("No auction found with id: {id}");
         }
-
+           if(auction.Seller != User.Identity.Name) {
+            return Unauthorized("You are not authorized to update this auction");
+        }
         _context.Auctions.Remove(_mapper.Map<Auction>(auction));
         var deletedAuction = _mapper.Map<AuctionDeleted>(auction);
         await _publishEndpoint.Publish(deletedAuction);
